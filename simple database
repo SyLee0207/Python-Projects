@@ -1,0 +1,91 @@
+import json
+import os
+#a simple database
+
+if os.path.exists('ls.json'):
+    with open('ls.json','rb') as f:
+        ls = json.load(f)
+    with open('userls.json','rb') as f:
+        userls = json.load(f)
+else:
+    ls={'Johnson':'admin user'}
+    userls = {'Johnson':{'password':'12345','permission':'admin'}}
+
+command = input('Welcome to the user database, pls input your command ')
+if command=='login':
+    user = input('username: ')
+    password = input('password:')
+    if user not in ls.keys():
+        ls[user]='guest user'
+        command = input('Welcome to the user database, pls input your command ')
+        while command!='exit':
+            if command=='current':
+                print('current user:'+user)
+                print('user type:admin'+'\npermission:read + write',end='\n')
+                command = input('Welcome to the user database, pls input your command ')
+            elif command=='list':
+                print(ls)
+                command = input('Welcome to the user database, pls input your command ')
+            else:
+                print('you don\'t have the permission')
+                command = input('Welcome to the user database, pls input your command ')
+        print('you have logged out the user database')
+    elif userls[user]['permission']=='admin':
+        while password!=userls[user]['password']:
+            print('wrong password')
+            password=input('input password again:')
+        print('welcome'+user+', you are an admin user')
+        command = input('Welcome to the user database, pls input your command ')
+        while command!='exit':
+            if command=='add':
+                new_user_name=input('new username:')
+                new_pass=input('password:')
+                new_perm=input('new user permission [guest/admin]')
+                if new_user_name not in userls.keys():
+                    userls[new_user_name]={'password':new_pass,'permission':new_perm}
+                    ls[new_user_name]=new_perm
+                else:
+                    print('the user is already exist')
+                command = input('Welcome to the user database, pls input your command ')
+            elif command=='del':
+                del_user=input('input the username you want to delete')
+                if del_user not in userls.keys():
+                    print('the user does not exist')
+                else:
+                    userls.pop(del_user)
+                    ls.pop(del_user)
+                command = input('Welcome to the user database, pls input your command ')
+            elif command=='current':
+                print('current user:'+user)
+                print('user type:admin'+'\npermission:read + write',end='\n')
+                command = input('Welcome to the user database, pls input your command ')
+            elif command=='list':
+                print(ls)
+                command = input('Welcome to the user database, pls input your command ')
+        print('you have logged out the user database')
+    else:
+        while command!='exit':
+            while password!=userls[user]['password']:
+                print('wrong password')
+                password=input('input password again:')
+            print('welcome'+user+', you are an guest user')
+            command = input('Welcome to the user database, pls input your command ')
+            if command=='current':
+                print('current user:'+user)
+                print('user type:admin'+'\npermission:read + write')
+                command = input('Welcome to the user database, pls input your command ')
+            elif command=='list':
+                print(ls)
+                command = input('Welcome to the user database, pls input your command ')
+            else:
+                print('you don\'t have the permission')
+                command = input('Welcome to the user database, pls input your command ')
+        print('you have logged out the user database')
+else:
+    print('you should first login')
+    command = input('Welcome to the user database, pls input your command ')
+
+with open('ls.json', 'w', encoding = 'utf-8') as f:
+    json.dump(ls, f, ensure_ascii = False)
+with open('userls.json', 'w', encoding = 'utf-8') as f:
+    json.dump(userls, f, ensure_ascii = False)
