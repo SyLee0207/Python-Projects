@@ -1,0 +1,101 @@
+#https://www.scientificamerican.com/podcast/60-second-science/
+
+#Data Collection
+import requests
+from bs4 import BeautifulSoup
+import re
+import time
+urls = []
+for i in range(1,21):
+    time.sleep(3)
+    print('page ',i)
+    url = 'https://www.scientificamerican.com/podcasts/?page={}'.format(i)
+    header = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
+    }
+    r = requests.get(url, headers = header)
+    soup = BeautifulSoup(r.text)
+    srcs = soup.find_all('a', href = re.compile("https://www.scientificamerican.com/podcast/.+"))
+    for src in srcs:
+        #print(src)
+        if src.attrs['href'][-17:] != '#transcripts-body':
+            urls.append(src.attrs['href'])
+
+datas = []
+for url in urls:
+    time.sleep(3)
+    print(url)
+    header = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
+    }
+    r = requests.get(url, headers = header)
+    soup = BeautifulSoup(r.text)
+    data = {}
+    data['title'] = soup.find('h3', class_ = "podcasts-header__title t_feature-title").string
+    data['tag'] = soup.find(class_ = 'article-header__inner__category t_tag t_tag--header').contents[0]
+    data['author'] = soup.find('a',href = re.compile('https://www.scientificamerican.com/author/.+')).string
+    data['date'] = soup.find('span', itemprop = 'datePublished').string
+    datas.append(data)
+    
+#use pandas to organise data
+import pandas as pd
+import numpy as np
+df = pd.DataFrame(datas)
+
+#Data pre-process(save and determine if is null)
+df.to_csv('datas.csv')
+df.isna().all()
+
+#data analysis
+import matplotlib.pyplot as plt
+tags_kind = set(df['tag'])
+tag_num = {}
+for tags in tags_kind:
+    tag_num[tags] = 0
+for i in range(len(df)):
+    tag_num[df['tag'][i]] += 1
+plt.figure(1, figsize=(15,15))
+plt.pie(tag_num.values(), labels = tag_num.keys(), autopct='%1.1f%%')
+plt.title('Proportion of articles in various scientific fields')
+plt.show()
+
+fig = plt.figure(figsize = (10,5))
+plt.bar(np.arange(len(tag_num)),tag_num.values(), color='lightblue')
+plt.xlabel("Serial number of scientific field")
+plt.ylabel("Number of articles in this field")
+plt.title("Number of articles in various scientific fields")
+plt.show()
+
+tag_num.keys(), len(tag_num)
+'''Conclusion: Most articles belong to Public Health, Biology, Environment, Conservation 
+   and Evolution fields. Few articles are from fields Dinosaurs, Energy, Nanotechnology, Epidemiology etc.'''
+   
+author_num = {}
+for author in set(df['author']):
+    author_num[author] = 0
+for i in range(len(df)):
+    author_num[df['author'][i]] += 1
+plt.figure(1, figsize=(15,15))
+plt.pie(author_num.values(), labels = author_num.keys(), autopct='%1.1f%%')
+plt.title('Percentage of articles published by each author')
+plt.show()
+
+fig = plt.figure(figsize = (10,5))
+plt.bar(np.arange(len(author_num)),author_num.values(), color='lightblue')
+plt.xlabel("Serial number of authors")
+plt.ylabel("Number of articles published by the author")
+plt.title("Number of articles published by each author")
+plt.show()
+
+author_num.keys(), len(author_num)
+'''Conclusion: Christopher Intagliata, 
+   Susanne Bard, Jason G Goldman and Karen Hopkin wrote the most articles.'''
+   
+date_num = {'2022': 0,'2021': 0,'2020': 0, '2019': 0,'2018': 0}
+for i in range(len(df)):
+    date_num[df['date'][i][-4:]] += 1
+plt.figure(1, figsize=(15,15))
+plt.pie(date_num.values(), labels = date_num.keys(), autopct='%1.1f%%')
+plt.title('Proportion of articles in each year')
+plt.show()
+# Conclusion: The year 2020 and 2021 had the most articles.
